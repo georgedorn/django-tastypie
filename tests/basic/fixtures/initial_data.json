@@ -52,5 +52,12 @@
         },
         "model": "basic.slugbasednote",
         "pk": "another-first-post"
+    },
+    {
+    	"fields": {
+    		"name": "First Snowflake"
+    	},
+    	"model": "basic.snowflake",
+    	"pk": "6481ce19-df3a-40f6-96f5-457e1d73e91a"
     }
 ]

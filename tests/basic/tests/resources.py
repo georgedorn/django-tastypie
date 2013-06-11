@@ -4,8 +4,8 @@ from django.test import TestCase
 from tastypie.bundle import Bundle
 from tastypie.fields import ToOneField, ToManyField
 from tastypie.resources import ModelResource
-from basic.api.resources import SlugBasedNoteResource
-from basic.models import Note, AnnotatedNote, SlugBasedNote
+from basic.api.resources import SlugBasedNoteResource, SnowflakeResource
+from basic.models import Note, AnnotatedNote, SlugBasedNote, Snowflake
 
 
 class InvalidLazyUserResource(ModelResource):
@@ -185,4 +185,77 @@ class SlugBasedResourceTestCase(TestCase):
 
         # Make sure it's gone.
         self.assertRaises(SlugBasedNote.DoesNotExist, SlugBasedNote.objects.get, pk='first-post')
+        
+class SnowflakeResourceTestCase(TestCase):
+    def setUp(self):
+        super(SnowflakeResourceTestCase, self).setUp()
+        self.n1 = Snowflake.objects.get(pk='6481ce19-df3a-40f6-96f5-457e1d73e91a')
+        self.request = HttpRequest()
+        self.request.method = 'PUT'
+        self.resource = SnowflakeResource()
+        self.n1_bundle = self.resource.build_bundle(obj=self.n1)
 
+    def test_bundle_unique_field(self):
+        self.assertEqual(self.resource.get_bundle_detail_data(self.n1_bundle), u'6481ce19-df3a-40f6-96f5-457e1d73e91a')
+
+    def test_obj_update(self):
+        bundle = self.resource.build_bundle(obj=self.n1, data={
+            'name': 'Foo!',
+        })
+        updated_bundle = self.resource.obj_update(bundle, pk='6481ce19-df3a-40f6-96f5-457e1d73e91a')
+        self.assertEqual(updated_bundle.obj.pk, '6481ce19-df3a-40f6-96f5-457e1d73e91a')
+        self.assertEqual(updated_bundle.obj.name, 'Foo!')
+
+        # Again, without the PK this time.
+        self.n1.slug = None
+        bundle = self.resource.build_bundle(obj=self.n1, data={
+            'name': 'Bar!',
+        })
+        updated_bundle_2 = self.resource.obj_update(bundle, pk='6481ce19-df3a-40f6-96f5-457e1d73e91a')
+        self.assertEqual(updated_bundle_2.obj.pk, '6481ce19-df3a-40f6-96f5-457e1d73e91a')
+        self.assertEqual(updated_bundle_2.obj.name, 'Bar!')
+
+    def test_update_in_place(self):
+        new_data = {
+            'uuid': u'1da093e9-6b07-4071-9a86-b78bdfd03908',
+            'name': u'Foo!',
+        }
+        new_bundle = self.resource.update_in_place(self.request, self.n1_bundle, new_data)
+        # Check for updated data.
+        self.assertEqual(new_bundle.obj.name, u'Foo!')
+        self.assertEqual(new_bundle.obj.pk, u'1da093e9-6b07-4071-9a86-b78bdfd03908')
+        # Make sure it looked up the right instance, even though we didn't
+        # hand it a PK...
+        self.assertEqual(new_bundle.obj.pk, self.n1_bundle.obj.pk)
+
+    def test_rollback(self):
+        bundles = [
+            self.n1_bundle
+        ]
+        self.resource.rollback(bundles)
+
+        # Make sure it's gone.
+        self.assertRaises(Snowflake.DoesNotExist, Snowflake.objects.get, pk='1da093e9-6b07-4071-9a86-b78bdfd03908')
+
+    def test_create_new(self):
+        bundle = self.resource.build_bundle(obj=None,
+                                            data={'name':'New Object'})
+        res = self.resource.obj_create(bundle)
+        new_object = res.obj
+        self.assertTrue(new_object.pk is not None)
+
+        #the new object's pk should look like a uuid4
+        new_pk = new_object.pk
+        self.assertEqual(new_pk.count('-'), 4)
+
+        new_pk_parts = new_pk.split('-')
+        self.assertEqual(len(new_pk_parts[0]), 8)
+        self.assertEqual(len(new_pk_parts[1]), 4)
+        self.assertEqual(len(new_pk_parts[2]), 4)
+        self.assertEqual(len(new_pk_parts[3]), 4)
+        self.assertEqual(len(new_pk_parts[4]), 12)
+        
+        self.assertEqual(new_object.name, 'New Object')
+
+        self.assertEqual(Snowflake.objects.count(), 2)
+        

@@ -43,3 +43,11 @@ class SlugBasedNote(models.Model):
 class UserForm(forms.ModelForm):
     class Meta:
         model = User
+        
+import uuid
+class Snowflake(models.Model):
+      uuid = models.CharField(max_length=36, primary_key=True,
+                              default=lambda: str(uuid.uuid4()), 
+                              editable=False)
+      name = models.CharField(max_length=32, null=False, blank=True, default='')
+

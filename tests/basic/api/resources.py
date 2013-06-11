@@ -4,7 +4,7 @@ from tastypie import fields
 from tastypie.resources import ModelResource
 from tastypie.authentication import SessionAuthentication
 from tastypie.authorization import Authorization
-from basic.models import Note, AnnotatedNote, SlugBasedNote
+from basic.models import Note, AnnotatedNote, SlugBasedNote, Snowflake
 
 
 class UserResource(ModelResource):
@@ -69,4 +69,11 @@ class SessionUserResource(ModelResource):
         resource_name = 'sessionusers'
         queryset = User.objects.all()
         authentication = SessionAuthentication()
+        authorization = Authorization()
+
+class SnowflakeResource(ModelResource):
+    class Meta:
+        queryset = Snowflake.objects.all()
+        resource_name = 'snowflake'
+        detail_uri_name = 'uuid'
         authorization = Authorization()
