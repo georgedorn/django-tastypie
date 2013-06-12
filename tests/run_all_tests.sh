@@ -29,12 +29,12 @@ for type in $TYPES; do
     echo "** $type **"
 
     if [ $type == 'related' ]; then
-        django-admin.py test ${type}_resource --settings=settings_$type
+        django-admin.py test ${type}_resource --settings=settings_$type --noinput
         continue
     elif [ $type == 'gis' ]; then
         sudo createdb -T template_postgis tastypie.db
     fi
 
-    django-admin.py test $type --settings=settings_$type
+    django-admin.py test $type --settings=settings_$type --noinput
     echo; echo
 done
