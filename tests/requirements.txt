@@ -1,3 +1,4 @@
+ssl
 django-oauth-plus
 oauth2
 lxml
