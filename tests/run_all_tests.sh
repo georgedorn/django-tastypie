@@ -32,7 +32,7 @@ for type in $TYPES; do
         django-admin.py test ${type}_resource --settings=settings_$type
         continue
     elif [ $type == 'gis' ]; then
-        createdb -T template_postgis tastypie.db
+        sudo -u postgres createdb -T template_postgis tastypie.db
     fi
 
     django-admin.py test $type --settings=settings_$type
