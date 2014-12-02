@@ -2240,7 +2240,7 @@ class BaseModelResource(Resource):
         (appname, modelname, (fieldname, identifier))
         
         unique_together fields also supported with this format:
-        (appname, modelname, (field1name, id1, field2name:, id2, ...))
+        (appname, modelname, (field1name, id1, field2name, id2, ...))
         """
         ids = set()
         
